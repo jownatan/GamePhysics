@@ -48,12 +48,13 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
     final screenSize = MediaQuery.of(context).size;
     _generateTerrain(screenSize);
     _objects.add(_player); // Add player to objects list
+    _player.loadImage();
   }
 
   void _onTick(Duration elapsed) {
     final deltaTime = 1 / 60; // Fixed timestep
     setState(() {
-      _updatePhysics(deltaTime);
+      updatePhysics(deltaTime);
       _updateLightSourcePosition();
     });
   }
@@ -65,23 +66,23 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
   }
 
   void updatePhysics(double deltaTime) {
-    for (var object in _objects) {
-      if (object.isStatic) continue; // Skip static objects
-
-      // Apply physics calculations (gravity, velocity, etc.)
-      object.position += object.velocity * deltaTime;
-    }
-  }
-
-  void _updatePhysics(double deltaTime) {
     for (var obj in _objects) {
-      if (obj.isStatic) continue; // Skip static objects
+      // Skip inactive or static objects (no physics for them), but always update player and explosive
+      if ((!obj.isAwake || obj.isStatic) && !(obj is PlayerObject || obj is ExplosiveBomb)) {
+        continue; // Skip player and explosive objects from static check
+      }
+
+      // Check if object has low speed and set to static if true, but skip for player and explosive
+      if (obj.velocity.distance < 1.0 && !(obj is PlayerObject || obj is ExplosiveBomb)) {
+        obj.isAwake = false;
+        obj.isStatic = true;
+        continue; // Skip the update for this object as it's now static
+      }
 
       obj.applyForce(const Offset(0, 1500)); // Gravity
       obj.update(deltaTime);
       _checkBoundsCollision(obj);
 
-      // Detect if the player is grounded
       if (obj == _player) {
         _player.isGrounded = _checkGrounded(_player);
       }
@@ -298,6 +299,7 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
   void _addNormalPhysicsObject(Offset position) {
     final normalObject = PhysicsObject(
       affectedByGravity: true,
+      isCollidable: true,
       position: position,
       color: Colors.green,
       size: 20.0,
@@ -313,15 +315,17 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
   void _addExplosivePhysicsObject(Offset position) {
     final explosive = ExplosiveBomb(
       color: Colors.red,
+
       position: position,
-      explosionRadius: 100.0,
-      explosionForce: 150000.0,
-      size: 20,
+      explosionRadius: 200.0, // Define explosion radius
+      explosionForce: 15000.0, // Define explosion force
+      size: 10,
     );
     _objects.add(explosive);
     inventory.add(explosive); // Add to inventory
 
-    Timer(const Duration(seconds: 3), () => explosive.explode(_objects)); // Trigger explosion after 3 seconds
+    // Trigger explosion after 3 seconds
+    Timer(const Duration(seconds: 3), () => explosive.explode(_objects));
   }
 
   void _addGasPhysicsObject(Offset position) {
@@ -336,7 +340,7 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
     _objects.clear(); // Clear old objects
 
     const double blockSize = 20.0; // Each block is 20x20
-    const double maxHeight = 200.0; // Maximum height of the terrain
+    const double maxHeight = 250.0; // Maximum height of the terrain
     final terrainObjects = <PhysicsObject>[];
 
     // Generate terrain using Perlin noise
@@ -350,6 +354,7 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
       for (int y = 0; y <= blocksHigh; y++) {
         bool isCollidable = y == blocksHigh; // Only the top block is collidable
         terrainObjects.add(PhysicsObject(
+          // awake
           position: Offset(x + blockSize / 2, size.height - y * blockSize - blockSize / 2),
           size: blockSize,
           color: isCollidable ? Colors.green : Colors.brown, // Grass on top, dirt below
@@ -360,6 +365,52 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
     }
 
     _objects.addAll(terrainObjects); // Add terrain to the world
+  }
+
+  void _addWalls(Size screenSize) {
+    const double wallThickness = 50.0; // Set wall thickness to control size of boundaries
+
+    // Create walls for all four boundaries
+    final walls = <PhysicsObject>[
+      // Left Wall
+      PhysicsObject(
+        position: Offset(-wallThickness / 2, screenSize.height / 2),
+        size: wallThickness,
+        isStatic: true,
+        isCollidable: true,
+        color: Colors.transparent, // Invisible wall
+      ),
+
+      // Right Wall
+      PhysicsObject(
+        position: Offset(screenSize.width + wallThickness / 2, screenSize.height / 2),
+        size: wallThickness,
+        isStatic: true,
+        isCollidable: true,
+        color: Colors.transparent, // Invisible wall
+      ),
+
+      // Top Wall
+      PhysicsObject(
+        position: Offset(screenSize.width / 2, -wallThickness / 2),
+        size: wallThickness,
+        isStatic: true,
+        isCollidable: true,
+        color: Colors.transparent, // Invisible wall
+      ),
+
+      // Bottom Wall
+      PhysicsObject(
+        position: Offset(screenSize.width / 2, screenSize.height + wallThickness / 2),
+        size: wallThickness,
+        isStatic: true,
+        isCollidable: true,
+        color: Colors.transparent, // Invisible wall
+      ),
+    ];
+
+    // Add walls to the world objects list
+    _objects.addAll(walls);
   }
 
   @override
@@ -384,7 +435,7 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
                 _stopSpawningObjects();
               },
               child: CustomPaint(
-                painter: WorldPainter(_objects, lightSource, 0, zoomFactor: 1.0),
+                painter: WorldPainter(_objects, lightSource, 0, zoomFactor: 1.0, useCamera: false),
                 child: Container(),
               ),
             ),

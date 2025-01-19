@@ -1,5 +1,6 @@
-import 'dart:ui';
+import 'dart:ui' as ui; // Import dart:ui and alias it as ui
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
 
 class PlayerObject extends PhysicsObject {
@@ -8,8 +9,9 @@ class PlayerObject extends PhysicsObject {
   final int spriteHeight; // Height of each sprite
   int currentFrame = 0; // The current frame of the animation
   bool isLeft = false;
-
   bool isGrounded; // Direction flag (left or right)
+  ui.Image? _image; // Use ui.Image here instead of Image
+  bool isImageLoaded = false; // To track if the image has loaded
 
   PlayerObject({
     required Offset position,
@@ -20,14 +22,19 @@ class PlayerObject extends PhysicsObject {
     required this.isGrounded,
   }) : super(position: position, size: size, color: Colors.transparent);
 
+  // Load the image asynchronously
+  void loadImage() async {
+    final ByteData data = await rootBundle.load(spritePath);
+    final image = await decodeImageFromList(data.buffer.asUint8List());
+    _image = image;
+    isImageLoaded = true;
+  }
+
   @override
   void render(Canvas canvas) {
-    // Load the image
-    final image = AssetImage(spritePath);
-    final imageStream = image.resolve(ImageConfiguration());
-
-    imageStream.addListener(ImageStreamListener((ImageInfo info, bool _) {
-      final img = info.image;
+    // Only render the image if it's loaded, otherwise render a loading state
+    if (isImageLoaded && _image != null) {
+      final img = _image!;
 
       // Calculate the horizontal position of the current frame in the sprite sheet
       int frameX = currentFrame * spriteWidth;
@@ -52,7 +59,12 @@ class PlayerObject extends PhysicsObject {
       } else {
         canvas.drawImageRect(img, sourceRect, rect, paint);
       }
-    }));
+    } else {
+      // Image is still loading, render a placeholder (e.g., a red rectangle)
+      final paint = Paint()..color = Colors.red; // Placeholder paint
+      final rect = Rect.fromCenter(center: position, width: size, height: size);
+      canvas.drawRect(rect, paint); // Draw a red square for debugging or loading indication
+    }
   }
 
   // Method to update the current frame (you can add logic to change frames for animation)

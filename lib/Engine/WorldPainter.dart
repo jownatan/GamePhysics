@@ -8,16 +8,23 @@ class WorldPainter extends CustomPainter {
   final Offset lightSource;
   final int shadowResolution;
   final double zoomFactor; // Zoom level
+  final bool useCamera; // Whether to use the camera (zoom and center on player)
 
-  WorldPainter(this.objects, this.lightSource, this.shadowResolution, {this.zoomFactor = 2.0});
+  WorldPainter(
+    this.objects,
+    this.lightSource,
+    this.shadowResolution, {
+    this.zoomFactor = 2.0,
+    this.useCamera = true, // Default to true, but you can pass false to disable the camera
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     // Find the player object to center the camera
     PlayerObject? player = objects.whereType<PlayerObject>().firstOrNull;
 
-    // Apply camera transformation if the player is found
-    if (player != null) {
+    // Apply camera transformation if the player is found and useCamera is true
+    if (useCamera && player != null) {
       // Center the player on the screen
       final Offset playerPosition = player.position;
       final Offset screenCenter = Offset(size.width / 2, size.height / 2);
