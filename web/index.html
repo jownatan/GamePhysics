@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your App Title</title>
+    <meta name="description" content="Your Flutter web app description" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="favicon.png" />
+  </head>
+  <body>
+    <div id="loading-message" style="font-size: 20px; text-align: center; margin-top: 50px;">
+      Loading your app...
+    </div>
+
+    <script>
+      // Include Flutter Loader
+      {{flutter_js}}
+
+      // Flutter build configuration
+      {{flutter_build_config}}
+
+      // Create a loading indicator
+      const loadingDiv = document.getElementById("loading-message");
+
+      // Initialize the Flutter app
+      _flutter.loader.load({
+        onEntrypointLoaded: async function (engineInitializer) {
+          loadingDiv.textContent = "Initializing engine...";
+          const appRunner = await engineInitializer.initializeEngine();
+
+          loadingDiv.textContent = "Running app...";
+          await appRunner.runApp();
+
+          document.body.removeChild(loadingDiv);
+        },
+      });
+    </script>
+
+    <script>
+      // Corrected Service Worker Registration
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register(`/flutter_service_worker.js?v=${Date.now()}`) // Dynamically set the version
+          .then(function (registration) {
+            console.log("Service worker registered with scope:", registration.scope);
+          })
+          .catch(function (error) {
+            console.error("Service worker registration failed:", error);
+          });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+name: ulovenoteslanding
+description: "Landing page for Ulovenotes"
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  #jaspr
+  #jaspr_flutter_embed: ^0.4.3
+  #jaspr_router: ^0.6.1
+
+  cupertino_icons: ^1.0.8
+  sizing: ^1.1.2
+  smooth_list_view: ^1.0.5
+  hyper_effects: ^0.2.3
+  shadcn_ui: ^0.17.6
+  hyper_slider: ^0.1.1
+  show_fps: ^1.0.6
+  drop_shadow: ^0.1.0
+  lottie: ^3.3.1
+  web_smooth_scroll: ^1.1.0
+  url_launcher: ^6.3.0
+  cloud_firestore: ^5.6.1
+  flutter_bounceable: ^1.2.0
+  confetti: ^0.8.0
+  glow_container: ^0.0.5
+  soft_edge_blur: ^0.1.3
+  gif_view: ^1.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+  msix: ^3.16.8
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+    - family: orsay
+      fonts:
+        - asset: lib/Fonts/Orsay/orsay.otf
+          weight: 900
+    - family: arck
+      fonts:
+        - asset: lib/Fonts/Arck/Arck.otf
+          weight: 900
+    - family: circular
+      fonts:
+        - asset: lib/Fonts/circular/Bold.otf
+          weight: 900
+        - asset: lib/Fonts/circular/BoldItalic.otf
+          weight: 800
+        - asset: lib/Fonts/circular/Black.otf
+          weight: 700
+        - asset: lib/Fonts/circular/Light.otf
+          weight: 600
+        - asset: lib/Fonts/circular/Medium.otf
+          weight: 500
+
+  # Add the sprites to the assets section
+  assets:
+    - lib/GAME/Sprites/Player/DinoSprites_doux.png
+    - lib/GAME/Sprites/Player/DinoSprites_mort.png
+    - lib/GAME/Sprites/Player/DinoSprites_tard.png
+    - lib/GAME/Sprites/Player/DinoSprites_vita.png
