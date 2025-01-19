@@ -73,7 +73,7 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
       }
 
       // Check if object has low speed and set to static if true, but skip for player and explosive
-      if (obj.velocity.distance < 1.0 && !(obj is PlayerObject || obj is ExplosiveBomb)) {
+      if (obj.velocity.distance < 5 && !(obj is PlayerObject || obj is ExplosiveBomb)) {
         obj.isAwake = false;
         obj.isStatic = true;
         continue; // Skip the update for this object as it's now static
@@ -142,7 +142,7 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
     }
   }
 
-  void _checkObjectCollisions() {
+  bool _checkObjectCollisions() {
     // Broad-phase optimization: Partition objects into a grid to reduce collision checks
     final grid = <Offset, List<PhysicsObject>>{};
     const gridSize = 80.0; // Partition size
@@ -155,6 +155,8 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
       grid.putIfAbsent(key, () => []).add(obj);
     }
 
+    bool collisionDetected = false; // Track if a collision happens
+
     for (var bucket in grid.values) {
       for (int i = 0; i < bucket.length; i++) {
         for (int j = i + 1; j < bucket.length; j++) {
@@ -163,10 +165,13 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
 
           if (_areObjectsColliding(objA, objB)) {
             _resolveCollision(objA, objB);
+            collisionDetected = true; // Set to true if collision occurs
           }
         }
       }
     }
+
+    return collisionDetected; // Return whether a collision was detected
   }
 
   bool _areObjectsColliding(PhysicsObject a, PhysicsObject b) {
