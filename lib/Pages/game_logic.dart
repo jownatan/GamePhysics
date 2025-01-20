@@ -42,7 +42,7 @@ class _GameLogicState extends State<GameLogic> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _player = PlayerObject(position: const Offset(100, 300), size: 50, spritePath: 'lib/GAME/Sprites/Player/DinoSprites_doux.png', spriteWidth: 24, spriteHeight: 24, isGrounded: false);
+    _player = PlayerObject(position: const Offset(100, 300), size: 50, spritePath: 'lib/GAME/Sprites/Player/DinoSprites_doux.png', spriteWidth: 24, spriteHeight: 20, isGrounded: false);
 
     _ticker = Ticker(_onTick)..start();
     WidgetsBinding.instance.addPostFrameCallback((_) {
