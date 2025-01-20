@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class PhysicsObject {
-  final Color color;
+  Color color;
   Offset position; // Current position of the object
   Offset velocity; // Velocity vector
   Offset acceleration; // Acceleration vector

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:sizing/sizing.dart';
-import 'package:ulovenoteslanding/Pages/Level.dart';
+import 'package:ulovenoteslanding/Pages/game_logic.dart';
 
 Future<void> main() async {
   // Ensure Firebase is initialized before app runs
@@ -12,7 +12,7 @@ Future<void> main() async {
 
 Future<Widget> _determineInitialRoute() async {
   // Add additional logic if needed to determine the initial route
-  return PhysicsGame();
+  return GameLogic();
 }
 
 class MyApp extends StatelessWidget {
@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
                 background: Color(0xFF121212),
               ),
             ),
-            home: snapshot.data ?? PhysicsGame(),
+            home: snapshot.data ?? GameLogic(),
           );
         },
       ),

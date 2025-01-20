@@ -2,53 +2,69 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:show_fps/show_fps.dart';
 import 'package:ulovenoteslanding/Engine/Noise.dart';
 import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
+import 'package:ulovenoteslanding/Engine/TerrainGen.dart';
 import 'package:ulovenoteslanding/Engine/WorldPainter.dart';
 import 'package:ulovenoteslanding/Engine/Player.dart';
 import 'package:ulovenoteslanding/GAME/Objects.dart';
+import 'package:ulovenoteslanding/GAME/PlayerController.dart';
 import 'package:ulovenoteslanding/Objects/Explosive.dart';
 
 enum SpawnType { gas, explosive, normal }
 
-class PhysicsGame extends StatefulWidget {
+class GameLogic extends StatefulWidget {
   @override
-  _PhysicsGameState createState() => _PhysicsGameState();
+  _GameLogicState createState() => _GameLogicState();
 }
 
-class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStateMixin {
+class _GameLogicState extends State<GameLogic> with SingleTickerProviderStateMixin {
   final List<PhysicsObject> _objects = [];
   final Random _random = Random();
   Timer? _spawnTimer;
   Offset? _spawnPosition;
-  bool _isExplosive = false;
+
   Offset lightSource = Offset(1, 1); // Initial light source position
   SpawnType _spawnType = SpawnType.normal; // Default spawn type is normal
+  late PlayerController _playerController; // Player controller instance
 
   final List<PhysicsObject> inventory = []; // Inventory to store physics objects
   late PlayerObject _player; // The player object
 
   late final Ticker _ticker;
   bool _isJumping = false; // To control jump state
-
+  TerrainGenerator terrainGenerator = TerrainGenerator(perlin: PerlinNoise());
+  late FocusNode _focusNode;
+  @override
   @override
   void initState() {
     super.initState();
-    _player = PlayerObject(position: const Offset(100, 300), size: 50, spritePath: 'lib/GAME/Sprites/Player/DinoSprites_doux.png', spriteWidth: 24, spriteHeight: 24, isGrounded: false); // Initialize the player at a starting position
+    _player = PlayerObject(position: const Offset(100, 300), size: 50, spritePath: 'lib/GAME/Sprites/Player/DinoSprites_doux.png', spriteWidth: 24, spriteHeight: 24, isGrounded: false);
 
     _ticker = Ticker(_onTick)..start();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       initWorld();
+      FocusScope.of(context).requestFocus(_focusNode); // Ensure focus is requested here
     });
+
+    terrainGenerator = TerrainGenerator(perlin: perlin);
+
+    _focusNode = FocusNode();
   }
+
+  final perlin = PerlinNoise();
 
   void initWorld() {
     final screenSize = MediaQuery.of(context).size;
-    _generateTerrain(screenSize);
+
+    terrainGenerator.generateTerrain(screenSize, _objects);
+
     _objects.add(_player); // Add player to objects list
     _player.loadImage();
+    _playerController = PlayerController(_player); // Initialize PlayerController
   }
 
   void _onTick(Duration elapsed) {
@@ -62,6 +78,8 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
   @override
   void dispose() {
     _ticker.dispose();
+    _focusNode.dispose(); // Dispose focus node when the widget is disposed
+
     super.dispose();
   }
 
@@ -204,47 +222,6 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
     b.velocity += clampedImpulse;
   }
 
-  Timer _move = Timer.periodic(const Duration(milliseconds: 1), (_) {});
-
-  void _stopPlayerTimer() {
-    _move.cancel();
-  }
-
-  void _movePlayerLeft() {
-    print("move left");
-    _move = Timer.periodic(const Duration(milliseconds: 1), (_) {
-      _player.velocity = Offset(-200, _player.velocity.dy);
-      _player.updateFrameRun(
-        _player.currentFrame + 1,
-        true,
-      );
-    });
-  }
-
-  void _movePlayerRight() {
-    print("move right");
-    _move = Timer.periodic(const Duration(milliseconds: 1), (_) {
-      _player.velocity = Offset(200, _player.velocity.dy);
-      _player.updateFrameRun(
-        _player.currentFrame + 1,
-        false,
-      );
-    });
-  }
-
-  void _jumpPlayer() {
-    if (_player.isGrounded || _isJumping) return; // Prevent double jumping
-    _isJumping = true;
-    _player.velocity = Offset(_player.velocity.dx, -500);
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _isJumping = false;
-    });
-  }
-
-  void _stopPlayerMovement() {
-    _player.velocity = Offset(0, _player.velocity.dy); // Stop horizontal movement
-  }
-
   void _updateLightSourcePosition() {
     final screenSize = MediaQuery.of(context).size;
     setState(() {
@@ -320,201 +297,158 @@ class _PhysicsGameState extends State<PhysicsGame> with SingleTickerProviderStat
   void _addExplosivePhysicsObject(Offset position) {
     final explosive = ExplosiveBomb(
       color: Colors.red,
-
       position: position,
-      explosionRadius: 200.0, // Define explosion radius
-      explosionForce: 15000.0, // Define explosion force
+      explosionRadius: 200.0,
+      explosionForce: 15000.0,
       size: 10,
     );
+    explosive.isStatic = false; // Make sure it's not static
     _objects.add(explosive);
-    inventory.add(explosive); // Add to inventory
 
     // Trigger explosion after 3 seconds
-    Timer(const Duration(seconds: 3), () => explosive.explode(_objects));
+    Timer(const Duration(seconds: 3), () => explosive.explode(_objects, terrainGenerator));
   }
 
   void _addGasPhysicsObject(Offset position) {
-    final gasObject = GasObject(position: position);
+    final gasObject = GasObject(
+      position: position,
+    );
     _objects.add(gasObject);
     inventory.add(gasObject); // Add to inventory
   }
 
-  final perlin = PerlinNoise();
-
-  void _generateTerrain(Size size) {
-    _objects.clear(); // Clear old objects
-
-    const double blockSize = 20.0; // Each block is 20x20
-    const double maxHeight = 250.0; // Maximum height of the terrain
-    final terrainObjects = <PhysicsObject>[];
-
-    // Generate terrain using Perlin noise
-    for (double x = 0; x < size.width; x += blockSize) {
-      // Generate Perlin noise for the height
-      double noiseValue = perlin.noise(x / size.width, 0);
-      double terrainHeight = ((noiseValue + 1) / 2 * maxHeight); // Normalize to [0, maxHeight]
-      int blocksHigh = (terrainHeight / blockSize).floor();
-
-      // Create vertical column of blocks
-      for (int y = 0; y <= blocksHigh; y++) {
-        bool isCollidable = y == blocksHigh; // Only the top block is collidable
-        terrainObjects.add(PhysicsObject(
-          // awake
-          position: Offset(x + blockSize / 2, size.height - y * blockSize - blockSize / 2),
-          size: blockSize,
-          color: isCollidable ? Colors.green : Colors.brown, // Grass on top, dirt below
-          isStatic: true,
-          isCollidable: isCollidable, // New property for collision checks
-        ));
-      }
-    }
-
-    _objects.addAll(terrainObjects); // Add terrain to the world
-  }
-
-  void _addWalls(Size screenSize) {
-    const double wallThickness = 50.0; // Set wall thickness to control size of boundaries
-
-    // Create walls for all four boundaries
-    final walls = <PhysicsObject>[
-      // Left Wall
-      PhysicsObject(
-        position: Offset(-wallThickness / 2, screenSize.height / 2),
-        size: wallThickness,
-        isStatic: true,
-        isCollidable: true,
-        color: Colors.transparent, // Invisible wall
-      ),
-
-      // Right Wall
-      PhysicsObject(
-        position: Offset(screenSize.width + wallThickness / 2, screenSize.height / 2),
-        size: wallThickness,
-        isStatic: true,
-        isCollidable: true,
-        color: Colors.transparent, // Invisible wall
-      ),
-
-      // Top Wall
-      PhysicsObject(
-        position: Offset(screenSize.width / 2, -wallThickness / 2),
-        size: wallThickness,
-        isStatic: true,
-        isCollidable: true,
-        color: Colors.transparent, // Invisible wall
-      ),
-
-      // Bottom Wall
-      PhysicsObject(
-        position: Offset(screenSize.width / 2, screenSize.height + wallThickness / 2),
-        size: wallThickness,
-        isStatic: true,
-        isCollidable: true,
-        color: Colors.transparent, // Invisible wall
-      ),
-    ];
-
-    // Add walls to the world objects list
-    _objects.addAll(walls);
-  }
-
+  // Handle keyboard events
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ShowFPS(
-        alignment: Alignment.topRight,
-        visible: true,
-        showChart: false,
-        child: Stack(
-          children: [
-            GestureDetector(
-              onPanDown: (details) {
-                _spawnPosition = details.localPosition;
-                _addPhysicsObject(details.localPosition);
-                _startSpawningObjects();
-              },
-              onPanUpdate: (details) {
-                _spawnPosition = details.localPosition;
-              },
-              onPanEnd: (_) {
-                _stopSpawningObjects();
-              },
-              child: CustomPaint(
-                painter: WorldPainter(_objects, lightSource, 0, zoomFactor: 1.0, useCamera: false),
-                child: Container(),
-              ),
-            ),
-
-            Positioned(child: Center(child: Text("${_objects.length} objects"))),
-            Positioned(
-              top: 50,
-              right: 50,
-              child: ShadButton.secondary(
-                onPressed: _toggleObjectType,
-                child: const Text("Toggle Object Type"),
-              ),
-            ),
-            // Movement buttons
-            Positioned(
-              bottom: 50,
-              left: 50,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: [
-                    // Left Button with Icon
-                    MouseRegion(
-                      onEnter: (_) => _movePlayerLeft(),
-                      onExit: (_) => _stopPlayerTimer(),
-                      child: IconButton(
-                        icon: Icon(Icons.arrow_left, color: Colors.white),
-                        onPressed: _movePlayerLeft,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Right Button with Icon
-                    MouseRegion(
-                      onEnter: (_) => _movePlayerRight(),
-                      onExit: (_) => _stopPlayerTimer(),
-                      child: IconButton(
-                        icon: Icon(Icons.arrow_right, color: Colors.white),
-                        onPressed: _movePlayerRight,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Jump Button with Icon
-                    MouseRegion(
-                      onEnter: (_) => _jumpPlayer(),
-                      onExit: (_) => _stopPlayerTimer(),
-                      child: IconButton(
-                        icon: Icon(Icons.arrow_upward, color: Colors.white),
-                        onPressed: _jumpPlayer,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Stop Movement Button with Icon
-                    MouseRegion(
-                      onEnter: (_) => _stopPlayerMovement(),
-                      onExit: (_) => _stopPlayerTimer(),
-                      child: IconButton(
-                        icon: Icon(Icons.pause, color: Colors.white),
-                        onPressed: _stopPlayerMovement,
-                      ),
-                    ),
-                  ],
+      body: KeyboardListener(
+        focusNode: _focusNode, // Ensure the FocusNode is set
+        onKeyEvent: (event) {
+          _handleKeyEvent(event); // Handle key events
+        },
+        child: ShowFPS(
+          alignment: Alignment.topRight,
+          visible: true,
+          showChart: false,
+          child: Stack(
+            children: [
+              GestureDetector(
+                onPanDown: (details) {
+                  _spawnPosition = details.localPosition;
+                  _addPhysicsObject(details.localPosition);
+                  _startSpawningObjects();
+                },
+                onPanUpdate: (details) {
+                  _spawnPosition = details.localPosition;
+                },
+                onPanEnd: (_) {
+                  _stopSpawningObjects();
+                },
+                child: CustomPaint(
+                  painter: WorldPainter(_objects, lightSource, 0, zoomFactor: 1.0, useCamera: false),
+                  child: Container(),
                 ),
               ),
-            ),
-          ],
+              Positioned(child: Center(child: Text("${_objects.length} objects"))),
+              Positioned(
+                top: 50,
+                right: 50,
+                child: ShadButton.secondary(
+                  onPressed: _toggleObjectType,
+                  child: const Text("Toggle Object Type"),
+                ),
+              ),
+              // Movement buttons
+              Positioned(
+                bottom: 50,
+                left: 50,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      // Left Button with Icon
+                      MouseRegion(
+                        onEnter: (_) => _playerController.moveLeft(),
+                        onExit: (_) => _playerController.stopMovement(),
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_left, color: Colors.white),
+                          onPressed: () => _playerController.moveLeft(),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Right Button with Icon
+                      MouseRegion(
+                        onEnter: (_) => _playerController.moveRight(),
+                        onExit: (_) => _playerController.stopMovement(),
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_right, color: Colors.white),
+                          onPressed: () => _playerController.moveRight(),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Jump Button with Icon
+                      MouseRegion(
+                        onEnter: (_) => _playerController.jump(),
+                        onExit: (_) => _playerController.stopMovement(),
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_upward, color: Colors.white),
+                          onPressed: () => _playerController.jump(),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Stop Movement Button with Icon
+                      MouseRegion(
+                        onEnter: (_) => _playerController.stopMovement(),
+                        child: IconButton(
+                          icon: Icon(Icons.pause, color: Colors.white),
+                          onPressed: () => _playerController.stopMovement(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  // Handle keyboard events
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      switch (event.logicalKey.keyLabel) {
+        case 'Arrow Left':
+        case 'a':
+          _playerController.moveLeft();
+          break;
+        case 'Arrow Right':
+        case 'd':
+          _playerController.moveRight();
+          break;
+        case 'Space':
+        case 'Arrow Up':
+          _playerController.jump();
+          break;
+      }
+    } else if (event is KeyUpEvent) {
+      // When key is released
+      switch (event.logicalKey.keyLabel) {
+        case 'Arrow Left':
+        case 'a':
+        case 'Arrow Right':
+        case 'd':
+          _playerController.stopMovement(); // Stop movement on key release
+          break;
+      }
+    }
   }
 }
