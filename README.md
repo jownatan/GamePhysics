@@ -6,7 +6,7 @@ With **SandsEngine**, you can easily make 2d games.
 
 # IN PROGRESS
 
-![alt text](https://raw.githubusercontent.com/jownatan/hyper_slider/refs/heads/main/image%20(1).png)
+![alt text](https://raw.githubusercontent.com/jownatan/GamePhysics/refs/heads/main/screen.png)
 
 ## Features
 
