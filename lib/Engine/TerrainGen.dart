@@ -10,7 +10,7 @@ class TerrainGenerator {
   final PerlinNoise perlin;
 
   TerrainGenerator({
-    this.blockSize = 50,
+    this.blockSize = 20,
     this.maxHeight = 500.0,
     required this.perlin,
   });
@@ -91,12 +91,15 @@ class TerrainGenerator {
       double distance = (block.position - explosionCenter).distance;
 
       if (block.isStatic && distance <= radius) {
-        // Make the block collidable and expose it
-        block.isCollidable = true;
-        block.color = Colors.green; // Change the color to green to indicate exposure
-
         // Add the block to the temporary list for removal after iteration
         toRemove.add(block);
+      } else {
+        // Make the block collidable and expose it
+        block.isCollidable = true;
+        block.isAwake = true;
+
+        block.color = _getTerrainColor(distance, block.position.dx.toInt(), block.position.dy.toInt()); // Change the color to green to indicate exposure
+        block.awake();
       }
     }
 

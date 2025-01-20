@@ -51,14 +51,14 @@ class ExplosiveBomb extends PhysicsObject {
           // Optionally, destroy the object if it is too close (explosion might destroy it)
           if (distance < 10.0) {
             objects.remove(obj); // Remove objects that are too close to the explosion
+            // Expose terrain within the explosion radius
+            terrainGenerator.exposeTerrain(position, explosionRadius, objects);
+            // Remove the explosive itself from the objects list
+            objects.remove(this);
           }
           obj.applyForce(direction * forceMagnitude);
         }
       }
-      // Expose terrain within the explosion radius
-      terrainGenerator.exposeTerrain(position, explosionRadius, objects);
-      // Remove the explosive itself from the objects list
-      objects.remove(this);
     }
   }
 }
