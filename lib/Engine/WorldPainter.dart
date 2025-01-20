@@ -5,17 +5,36 @@ import 'package:ulovenoteslanding/Engine/Player.dart';
 
 class WorldPainter extends CustomPainter {
   final List<PhysicsObject> objects;
-  final Offset lightSource;
   final int shadowResolution;
   final double zoomFactor; // Zoom level
   final bool useCamera; // Whether to use the camera (zoom and center on player)
 
+  // Toggle flags for each effect
+  final bool useLighting;
+  final bool useBloom;
+  final bool useRefraction;
+  final bool useAmbientOcclusion;
+  final bool useWaterEffect;
+  final bool useCelShading;
+  final bool useOutlineEffect;
+  final bool useHeatDistortion;
+
+  // The sun (light source) position
+  final Offset sunPosition = Offset(800, 150); // Fixed position for sun
+
   WorldPainter(
     this.objects,
-    this.lightSource,
     this.shadowResolution, {
     this.zoomFactor = 2.0,
     this.useCamera = true, // Default to true, but you can pass false to disable the camera
+    this.useLighting = true,
+    this.useBloom = false,
+    this.useRefraction = false,
+    this.useAmbientOcclusion = false,
+    this.useWaterEffect = false,
+    this.useCelShading = false,
+    this.useOutlineEffect = false,
+    this.useHeatDistortion = false,
   });
 
   @override
@@ -35,47 +54,123 @@ class WorldPainter extends CustomPainter {
       canvas.translate(-playerPosition.dx, -playerPosition.dy);
     }
 
-    // Draw the background
-    final backgroundPaint = Paint()..color = Colors.black;
-    canvas.drawRect(Offset.zero & size, backgroundPaint);
+    // Draw the background sky (gradient effect)
+    final skyPaint = Paint();
+    final skyGradient = RadialGradient(
+      colors: [Color(0xFF87CEEB), Color.fromARGB(255, 185, 209, 233)], // Sky colors (light blue to deep blue)
+      center: Alignment.topCenter,
+      radius: 1.0,
+    );
+    skyPaint.shader = skyGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawRect(Offset.zero & size, skyPaint);
 
-    // Paint shadows for each object
+    // Draw the glowing sun at a fixed location
+
+    // Apply all effects
+    if (useBloom) _applyBloomEffect(canvas, size);
+    if (useAmbientOcclusion) _applyAmbientOcclusion(canvas, size);
+    if (useWaterEffect) _applyWaterEffect(canvas, size);
+
+    // Paint shadows for each object with dynamic light interaction
     for (int i = 0; i < shadowResolution; i++) {
       double angle = (i / shadowResolution) * 2 * pi;
       double offsetX = cos(angle);
       double offsetY = sin(angle);
-      Offset rayEnd = lightSource + Offset(offsetX * size.width, offsetY * size.height);
+      Offset rayEnd = sunPosition + Offset(offsetX * size.width, offsetY * size.height);
 
-      Offset? intersection = _checkRayIntersection(lightSource, rayEnd);
+      Offset? intersection = _checkRayIntersection(sunPosition, rayEnd);
 
       final shadowPaint = Paint()
-        ..color = Colors.white.withOpacity(0.2)
+        ..color = Colors.black.withOpacity(0.3)
         ..strokeWidth = 1
         ..style = PaintingStyle.stroke;
 
       if (intersection != null) {
-        canvas.drawLine(lightSource, intersection, shadowPaint);
+        // Draw shadows with gradient effects based on distance from light
+        double distance = (intersection - sunPosition).distance;
+        shadowPaint.color = Colors.black.withOpacity(0.3 + (distance / size.width) * 0.7);
+        canvas.drawLine(sunPosition, intersection, shadowPaint);
       } else {
-        canvas.drawLine(lightSource, rayEnd, shadowPaint);
+        canvas.drawLine(sunPosition, rayEnd, shadowPaint);
       }
     }
 
-    // Paint each object (check if it has a sprite)
+    // Paint each object with lighting effect
     for (var object in objects) {
       if (object is PlayerObject) {
-        object.render(canvas); // Render the player sprite
+        if (useLighting) _renderPlayerWithLighting(canvas, object); // Render the player sprite with lighting
       } else {
-        final objectPaint = Paint()..color = object.color;
-        canvas.drawRect(
-          Rect.fromCenter(
-            center: object.position,
-            width: object.size,
-            height: object.size,
-          ),
-          objectPaint,
-        );
+        if (useLighting) _renderObjectWithLighting(canvas, object); // Render other objects with lighting
+        //  if (useCelShading) _applyCelShading(canvas, object); // Apply cel-shading to objects
+        //  if (useOutlineEffect) _applyOutline(canvas, object); // Apply outline effect to objects
       }
     }
+  }
+
+  // Function to apply bloom effect
+  void _applyBloomEffect(Canvas canvas, Size size) {
+    final bloomPaint = Paint()..color = Colors.white.withOpacity(0.5);
+    canvas.saveLayer(Offset.zero & size, bloomPaint);
+    canvas.restore();
+  }
+
+  // Function to apply ambient occlusion
+  void _applyAmbientOcclusion(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.black.withOpacity(0.2);
+    for (var object in objects) {
+      double shadowStrength = (object.position - sunPosition).distance * 0.05;
+
+      // Ensure opacity is within the valid range
+      double shadowOpacity = (shadowStrength).clamp(0.0, 1.0);
+      paint.color = paint.color.withOpacity(shadowOpacity);
+
+      canvas.drawRect(
+        Rect.fromCenter(center: object.position, width: object.size, height: object.size),
+        paint,
+      );
+    }
+  }
+
+  // Function to apply water effect
+  void _applyWaterEffect(Canvas canvas, Size size) {
+    Paint waterPaint = Paint()..color = Colors.blue.withOpacity(0.3);
+    double waveFrequency = 0.05;
+    double waveAmplitude = 10.0;
+
+    for (var y = 0.0; y < size.height; y += 10.0) {
+      double waveOffset = sin(y * waveFrequency) * waveAmplitude;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y + waveOffset),
+        waterPaint,
+      );
+    }
+  }
+
+  // Function to render the player with lighting effect
+  void _renderPlayerWithLighting(Canvas canvas, PlayerObject object) {
+    double distance = (object.position - sunPosition).distance;
+    double lightIntensity = 1.0 / (1 + distance * 0.1); // Inverse square law for light falloff
+
+    Paint paint = Paint()..color = object.color.withOpacity(lightIntensity);
+
+    object.render(canvas); // Assuming render method modifies player appearance with paint
+  }
+
+  // Function to render generic objects with lighting effect
+  void _renderObjectWithLighting(Canvas canvas, PhysicsObject object) {
+    final paint = Paint()
+      ..color = object.color
+      ..style = PaintingStyle.fill;
+
+    double distance = (object.position - sunPosition).distance;
+    double lightIntensity = 40 / (1 + distance * 0.1); // Inverse square law for light falloff
+    paint.color = paint.color.withOpacity(lightIntensity);
+
+    canvas.drawRect(
+      Rect.fromCenter(center: object.position, width: object.size, height: object.size),
+      paint,
+    );
   }
 
   // Function to check if a ray intersects any object

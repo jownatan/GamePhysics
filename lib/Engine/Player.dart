@@ -31,7 +31,9 @@ class PlayerObject extends PhysicsObject {
   }
 
   @override
-  void render(Canvas canvas) {
+  void render(
+    Canvas canvas,
+  ) {
     // Only render the image if it's loaded, otherwise render a loading state
     if (isImageLoaded && _image != null) {
       final img = _image!;
@@ -62,8 +64,15 @@ class PlayerObject extends PhysicsObject {
     } else {
       // Image is still loading, render a placeholder (e.g., a red rectangle)
       final paint = Paint()..color = Colors.red; // Placeholder paint
-      final rect = Rect.fromCenter(center: position, width: size, height: size);
-      canvas.drawRect(rect, paint); // Draw a red square for debugging or loading indication
+      final rect = Rect.fromCenter(
+        center: position,
+        width: size,
+        height: size,
+      );
+      canvas.drawRect(
+        rect,
+        paint,
+      ); // Draw a red square for debugging or loading indication
     }
   }
 

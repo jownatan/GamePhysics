@@ -345,7 +345,7 @@ class _GameLogicState extends State<GameLogic> with SingleTickerProviderStateMix
                   _stopSpawningObjects();
                 },
                 child: CustomPaint(
-                  painter: WorldPainter(_objects, lightSource, 0, zoomFactor: 1.0, useCamera: false),
+                  painter: WorldPainter(_objects, 0, zoomFactor: 1.0, useCamera: false),
                   child: Container(),
                 ),
               ),
