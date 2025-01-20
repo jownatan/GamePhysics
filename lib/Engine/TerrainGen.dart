@@ -85,6 +85,7 @@ class TerrainGenerator {
   /// Marks blocks within a radius as exposed and updates collision
   void exposeTerrain(Offset explosionCenter, double radius, List<PhysicsObject> objects) {
     List<PhysicsObject> toRemove = []; // Temporary list to store objects to remove
+    print("Explosion center: $explosionCenter, Radius: $radius");
 
     for (var block in objects) {
       // Check if the object is within the explosion radius
@@ -93,12 +94,12 @@ class TerrainGenerator {
       if (block.isStatic && distance <= radius) {
         // Add the block to the temporary list for removal after iteration
         toRemove.add(block);
-      } else {
-        // Make the block collidable and expose it
+      } else if (distance <= radius) {
+        block.color = Colors.brown.shade900;
         block.isCollidable = true;
+        block.isStatic = true;
         block.isAwake = true;
-
-        block.color = _getTerrainColor(distance, block.position.dx.toInt(), block.position.dy.toInt()); // Change the color to green to indicate exposure
+      } else {
         block.awake();
       }
     }

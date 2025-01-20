@@ -298,15 +298,18 @@ class _GameLogicState extends State<GameLogic> with SingleTickerProviderStateMix
     final explosive = ExplosiveBomb(
       color: Colors.red,
       position: position,
-      explosionRadius: 200.0,
-      explosionForce: 15000.0,
+      explosionRadius: 100.0, // Adjust for desired radius
+      explosionForce: 1500.0, // Adjust for desired force
       size: 10,
     );
-    explosive.isStatic = false; // Make sure it's not static
+
+    explosive.isStatic = false; // Ensure it's dynamic
     _objects.add(explosive);
 
     // Trigger explosion after 3 seconds
-    Timer(const Duration(seconds: 3), () => explosive.explode(_objects, terrainGenerator));
+    Timer(const Duration(seconds: 3), () {
+      explosive.explode(_objects, terrainGenerator);
+    });
   }
 
   void _addGasPhysicsObject(Offset position) {

@@ -26,40 +26,52 @@ class ExplosiveBomb extends PhysicsObject {
         );
 
   void explode(List<PhysicsObject> objects, TerrainGenerator terrainGenerator) {
+    List<PhysicsObject> toRemove = []; // Track objects to remove
+    final List<PhysicsObject> affectedObjects = []; // Track affected objects
+
     // Apply force to nearby objects
     for (var obj in objects) {
-      // Skip if the object is static or shouldn't be affected
-      //if (obj.isStatic || !obj.isCollidable) continue;
-      // Wake up the object if it's not already awake
-      if (!obj.isAwake) {
-        obj.isAwake = true;
-        obj.isStatic = false; // Make the object dynamic
-      }
+      if (obj == this) continue; // Skip the explosive object itself
+
       final distance = (position - obj.position).distance;
-      // Only apply force if the object is within explosion radius
-      if (distance < explosionRadius) {
-        // Calculate direction of force (away from the explosion center)
-        double distance = (obj.position - position).distance;
-        if (distance <= explosionRadius) {
-          final direction = (obj.position - position).normalize();
-          // Calculate force magnitude based on the distance
-          final forceMagnitude = (1 - distance / explosionRadius) * explosionForce;
-          // Apply the force to move the object
-          final force = direction * forceMagnitude;
-          // Apply the force to the object's velocity
-          obj.velocity += force;
-          // Optionally, destroy the object if it is too close (explosion might destroy it)
-          if (distance < 10.0) {
-            objects.remove(obj); // Remove objects that are too close to the explosion
-            // Expose terrain within the explosion radius
-            terrainGenerator.exposeTerrain(position, explosionRadius, objects);
-            // Remove the explosive itself from the objects list
-            objects.remove(this);
-          }
-          obj.applyForce(direction * forceMagnitude);
+
+      // Wake up objects and apply force if within explosion radius
+      if (distance <= explosionRadius) {
+        if (obj.isAwake) {
+          obj.isAwake = true;
+          obj.isStatic = false; // Make the object dynamic
         }
+
+        print("bipbip boom");
+
+        final direction = (obj.position - position).normalize();
+        final forceMagnitude = (1 - distance / explosionRadius) * explosionForce;
+        final force = direction * forceMagnitude;
+
+        // Apply force to the object
+        obj.velocity += force;
+        obj.applyForce(force);
+
+        // Mark objects very close to the explosion for removal
+        if (distance < explosionRadius / 2) {
+          toRemove.add(obj);
+          print("Marked object for removal");
+        }
+
+        // Keep track of affected objects for terrain exposure
+        affectedObjects.add(obj);
       }
     }
+
+    // Expose terrain within the explosion radius
+    terrainGenerator.exposeTerrain(position, explosionRadius, affectedObjects);
+
+    // Remove marked objects
+    objects.removeWhere((obj) => toRemove.contains(obj));
+    print("Removed ${toRemove.length} objects");
+
+    // Remove the explosive itself from the objects list
+    objects.remove(this);
   }
 }
 
