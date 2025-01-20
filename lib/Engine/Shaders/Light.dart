@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 
-import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
+import 'package:SandsEngine/Engine/PhysicsObject.dart';
 
 class PhysicsLightShader extends CustomPainter {
   final List<PhysicsObject> objects;

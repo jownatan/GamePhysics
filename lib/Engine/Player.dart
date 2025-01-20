@@ -1,7 +1,7 @@
 import 'dart:ui' as ui; // Import dart:ui and alias it as ui
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
+import 'package:SandsEngine/Engine/PhysicsObject.dart';
 
 class PlayerObject extends PhysicsObject {
   final String spritePath; // Path to the sprite sheet

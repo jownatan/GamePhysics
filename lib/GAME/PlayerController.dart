@@ -1,7 +1,7 @@
 // player_movement.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:ulovenoteslanding/Engine/Player.dart';
+import 'package:SandsEngine/Engine/Player.dart';
 
 class PlayerController {
   final PlayerObject player;

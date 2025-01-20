@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:ulovenoteslanding/Pages/game_logic.dart';
+import 'package:SandsEngine/Pages/game_logic.dart';
 
 class PhysicsGame extends StatefulWidget {
   @override

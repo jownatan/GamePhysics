@@ -5,14 +5,14 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:show_fps/show_fps.dart';
-import 'package:ulovenoteslanding/Engine/Noise.dart';
-import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
-import 'package:ulovenoteslanding/Engine/TerrainGen.dart';
-import 'package:ulovenoteslanding/Engine/WorldPainter.dart';
-import 'package:ulovenoteslanding/Engine/Player.dart';
-import 'package:ulovenoteslanding/GAME/Objects.dart';
-import 'package:ulovenoteslanding/GAME/PlayerController.dart';
-import 'package:ulovenoteslanding/Objects/Explosive.dart';
+import 'package:SandsEngine/Engine/Noise.dart';
+import 'package:SandsEngine/Engine/PhysicsObject.dart';
+import 'package:SandsEngine/Engine/TerrainGen.dart';
+import 'package:SandsEngine/Engine/WorldPainter.dart';
+import 'package:SandsEngine/Engine/Player.dart';
+import 'package:SandsEngine/GAME/Objects.dart';
+import 'package:SandsEngine/GAME/PlayerController.dart';
+import 'package:SandsEngine/Objects/Explosive.dart';
 
 enum SpawnType { gas, explosive, normal }
 

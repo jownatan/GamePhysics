@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
+import 'package:SandsEngine/Engine/PhysicsObject.dart';
 
 class ExplosiveObject extends PhysicsObject {
   double explosionRadius; // Radius of the explosion

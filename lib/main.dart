@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:sizing/sizing.dart';
-import 'package:ulovenoteslanding/Pages/game_logic.dart';
+import 'package:SandsEngine/Pages/game_logic.dart';
 
 Future<void> main() async {
   // Ensure Firebase is initialized before app runs

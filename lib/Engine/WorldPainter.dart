@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
-import 'package:ulovenoteslanding/Engine/Player.dart';
+import 'package:SandsEngine/Engine/PhysicsObject.dart';
+import 'package:SandsEngine/Engine/Player.dart';
 
 class WorldPainter extends CustomPainter {
   final List<PhysicsObject> objects;

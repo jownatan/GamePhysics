@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:ulovenoteslanding/Engine/Noise.dart';
-import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
-import 'package:ulovenoteslanding/GAME/Objects.dart';
+import 'package:SandsEngine/Engine/Noise.dart';
+import 'package:SandsEngine/Engine/PhysicsObject.dart';
+import 'package:SandsEngine/GAME/Objects.dart';
 
 class TerrainGenerator {
   final double blockSize;

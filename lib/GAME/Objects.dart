@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
-import 'package:ulovenoteslanding/Engine/TerrainGen.dart';
-import 'package:ulovenoteslanding/Objects/Explosive.dart';
+import 'package:SandsEngine/Engine/PhysicsObject.dart';
+import 'package:SandsEngine/Engine/TerrainGen.dart';
+import 'package:SandsEngine/Objects/Explosive.dart';
 
 class GasObject extends PhysicsObject {
   GasObject({required Offset position}) : super(position: position, size: 20.0, color: Color(0xFF00FF00), gravity: Offset(0, -3000), affectedByGravity: true); // Green for gas
