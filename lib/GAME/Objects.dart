@@ -64,10 +64,16 @@ class ExplosiveBomb extends PhysicsObject {
 }
 
 class TerrainObject extends PhysicsObject {
+  var isCollidable;
+
+  var isStatic;
+
   TerrainObject({
     required Offset position,
     required Color color,
     required double size,
+    required this.isCollidable,
+    required this.isStatic,
   }) : super(
           position: position,
           color: color,

@@ -29,7 +29,7 @@ class WorldPainter extends CustomPainter {
     this.useCamera = true, // Default to true, but you can pass false to disable the camera
     this.useLighting = true,
     this.useBloom = false,
-    this.useRefraction = false,
+    this.useRefraction = true,
     this.useAmbientOcclusion = false,
     this.useWaterEffect = false,
     this.useCelShading = false,
@@ -57,7 +57,10 @@ class WorldPainter extends CustomPainter {
     // Draw the background sky (gradient effect)
     final skyPaint = Paint();
     final skyGradient = RadialGradient(
-      colors: [Color(0xFF87CEEB), Color.fromARGB(255, 185, 209, 233)], // Sky colors (light blue to deep blue)
+      colors: [
+        Color(0xFF87CEEB),
+        Color.fromARGB(255, 185, 209, 233),
+      ], // Sky colors (light blue to deep blue)
       center: Alignment.topCenter,
       radius: 1.0,
     );
@@ -70,6 +73,10 @@ class WorldPainter extends CustomPainter {
     if (useBloom) _applyBloomEffect(canvas, size);
     if (useAmbientOcclusion) _applyAmbientOcclusion(canvas, size);
     if (useWaterEffect) _applyWaterEffect(canvas, size);
+    if (useRefraction) _applyRefractionEffect(canvas, size); // Placeholder for refraction
+    if (useCelShading) _applyCelShading(canvas, size); // Placeholder for cel shading
+    if (useOutlineEffect) _applyOutlineEffect(canvas, size); // Placeholder for outline effect
+    if (useHeatDistortion) _applyHeatDistortion(canvas, size); // Placeholder for heat distortion
 
     // Paint shadows for each object with dynamic light interaction
     for (int i = 0; i < shadowResolution; i++) {
@@ -101,8 +108,6 @@ class WorldPainter extends CustomPainter {
         if (useLighting) _renderPlayerWithLighting(canvas, object); // Render the player sprite with lighting
       } else {
         if (useLighting) _renderObjectWithLighting(canvas, object); // Render other objects with lighting
-        //  if (useCelShading) _applyCelShading(canvas, object); // Apply cel-shading to objects
-        //  if (useOutlineEffect) _applyOutline(canvas, object); // Apply outline effect to objects
       }
     }
   }
@@ -147,6 +152,46 @@ class WorldPainter extends CustomPainter {
     }
   }
 
+  // Function to apply refraction effect
+  void _applyRefractionEffect(Canvas canvas, Size size) {
+    // Placeholder for refraction effect logic
+    Paint refractionPaint = Paint()..color = Colors.green.withOpacity(0.2);
+    canvas.drawRect(Offset.zero & size, refractionPaint);
+  }
+
+  // Function to apply cel shading effect
+  void _applyCelShading(Canvas canvas, Size size) {
+    // Placeholder for cel shading logic
+    Paint celPaint = Paint()..color = Colors.blue.withOpacity(0.7);
+    canvas.drawRect(Offset.zero & size, celPaint);
+  }
+
+  // Function to apply outline effect
+  void _applyOutlineEffect(Canvas canvas, Size size) {
+    // Placeholder for outline effect logic
+    Paint outlinePaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawRect(Offset.zero & size, outlinePaint);
+  }
+
+  // Function to apply heat distortion effect
+  void _applyHeatDistortion(Canvas canvas, Size size) {
+    Paint heatPaint = Paint()..color = Colors.red.withOpacity(0.3);
+    double waveFrequency = 0.1;
+    double waveAmplitude = 20.0;
+
+    for (var y = 0.0; y < size.height; y += 10.0) {
+      double waveOffset = sin(y * waveFrequency) * waveAmplitude;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y + waveOffset),
+        heatPaint,
+      );
+    }
+  }
+
   // Function to render the player with lighting effect
   void _renderPlayerWithLighting(Canvas canvas, PlayerObject object) {
     double distance = (object.position - sunPosition).distance;
@@ -164,8 +209,12 @@ class WorldPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     double distance = (object.position - sunPosition).distance;
-    double lightIntensity = 40 / (1 + distance * 0.1); // Inverse square law for light falloff
-    paint.color = paint.color.withOpacity(lightIntensity);
+    double lightIntensity = 50 / (1 + distance * 0.1); // Inverse square law for light falloff
+
+    // Ensure the opacity is within the range [0.0, 1.0]
+    double opacity = lightIntensity.clamp(0.0, 1.0);
+
+    paint.color = paint.color.withOpacity(opacity);
 
     canvas.drawRect(
       Rect.fromCenter(center: object.position, width: object.size, height: object.size),

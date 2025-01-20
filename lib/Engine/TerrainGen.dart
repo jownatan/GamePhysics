@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ulovenoteslanding/Engine/Noise.dart';
 import 'package:ulovenoteslanding/Engine/PhysicsObject.dart';
+import 'package:ulovenoteslanding/GAME/Objects.dart';
 
 class TerrainGenerator {
   final double blockSize;
@@ -25,7 +26,7 @@ class TerrainGenerator {
 
       for (int y = 0; y <= blocksHigh; y++) {
         bool isCollidable = y == blocksHigh;
-        objects.add(PhysicsObject(
+        objects.add(TerrainObject(
           position: Offset(x + blockSize / 2, size.height - y * blockSize - blockSize / 2),
           size: blockSize,
           color: isCollidable ? Colors.green : Colors.brown,
