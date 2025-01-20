@@ -10,7 +10,7 @@ class TerrainGenerator {
   final PerlinNoise perlin;
 
   TerrainGenerator({
-    this.blockSize = 20.0,
+    this.blockSize = 50,
     this.maxHeight = 500.0,
     required this.perlin,
   });
@@ -41,6 +41,7 @@ class TerrainGenerator {
         // Add trees on top of the terrain (only on the surface)
         if (y == blocksHigh && terrainHeight > 100 && (x / blockSize).toInt() % 10 == 0) {
           // Create the tree at the surface of the terrain
+          /*
           TreeObject tree = TreeObject(
             position: Offset(x + blockSize / 2, size.height - terrainHeight - 6 - blockSize / 2),
             size: 20, // Scaling tree size
@@ -48,9 +49,11 @@ class TerrainGenerator {
             foliageColor: Colors.green, // Foliage color
             isStatic: true,
           );
+          
 
           // Generate the tree by creating the trunk and foliage
           tree.generateTree(objects);
+          */
         }
       }
 
