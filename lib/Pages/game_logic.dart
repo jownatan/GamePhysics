@@ -368,7 +368,7 @@ class _GameLogicState extends State<GameLogic> with SingleTickerProviderStateMix
                     color: Colors.black.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Column(
+                  child: Row(
                     children: [
                       // Left Button with Icon
                       MouseRegion(
@@ -390,6 +390,23 @@ class _GameLogicState extends State<GameLogic> with SingleTickerProviderStateMix
                           onPressed: () => _playerController.moveRight(),
                         ),
                       ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+              // Movement buttons2
+              Positioned(
+                bottom: 50,
+                right: 50,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
                       const SizedBox(height: 20),
 
                       // Jump Button with Icon
